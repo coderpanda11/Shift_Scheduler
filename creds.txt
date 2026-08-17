@@ -1,0 +1,4 @@
+Login ID	Password	Role
+dc_incharge DcIncharge@123  Admin (full access + user management)
+scheduler1 Scheduler@123    DC In-Charge
+staff_view Staff@123  Staff (view/use app)
