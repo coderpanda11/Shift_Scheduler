@@ -5,14 +5,17 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
+from config import default_availability_pin
 from services.employee_service import (
     add_employee,
     deactivate_employee,
     delete_employee,
     list_employees,
     list_roles,
+    set_employee_availability_pin,
     update_employee,
 )
+from services.availability_auth_service import employee_requires_avail_pin
 from services.schedule_service import employee_duty_history
 from services.settings_service import get_operator_name
 from utils.auth_context import current_operator
@@ -21,6 +24,10 @@ from utils.session import db_session
 
 def render() -> None:
     st.title("Employee Management")
+    st.caption(
+        "DC/In-Charge duty roster staff only. **VPS Team** members are managed under "
+        "**VPS Team → Members** (separate `vps_members` table)."
+    )
 
     with db_session() as session:
         operator = current_operator(get_operator_name(session))
@@ -92,6 +99,31 @@ def render() -> None:
                             st.rerun()
                         except Exception as exc:
                             st.error(f"Update failed: {exc}")
+
+                if employee_requires_avail_pin(emp.role.code):
+                    with st.expander("Reset availability PIN"):
+                        st.caption(
+                            f"Each staff member has a **unique** PIN for My Availability. "
+                            f"Default for new staff: `{default_availability_pin('<staff_no>')}`"
+                        )
+                        with st.form("reset_avail_pin_form"):
+                            new_pin = st.text_input("New availability PIN", type="password")
+                            confirm_pin = st.text_input("Confirm PIN", type="password")
+                            if st.form_submit_button("Reset PIN"):
+                                if not new_pin.strip():
+                                    st.error("PIN cannot be empty.")
+                                elif new_pin != confirm_pin:
+                                    st.error("PINs do not match.")
+                                else:
+                                    try:
+                                        set_employee_availability_pin(
+                                            session, emp_id, new_pin, operator=operator
+                                        )
+                                        session.commit()
+                                        st.success(f"Availability PIN reset for {emp.name}.")
+                                        st.rerun()
+                                    except Exception as exc:
+                                        st.error(str(exc))
 
                 col1, col2 = st.columns(2)
                 with col1:

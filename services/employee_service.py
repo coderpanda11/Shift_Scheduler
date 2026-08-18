@@ -8,7 +8,9 @@ from typing import Optional
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from config import default_availability_pin
 from models import AuditLog, Availability, Employee, Role, ShiftAssignment
+from services.auth_service import hash_password
 
 
 def list_roles(session: Session) -> list[Role]:
@@ -48,12 +50,40 @@ def add_employee(
     )
     session.add(emp)
     session.flush()
+    if staff:
+        emp.availability_pin_hash = hash_password(default_availability_pin(staff))
     session.add(
         AuditLog(
             action="employee_added",
             entity_type="employee",
             entity_id=emp.id,
             new_value=f"{name} ({staff or 'no staff no.'})",
+            created_by=operator,
+        )
+    )
+    return emp
+
+
+def set_employee_availability_pin(
+    session: Session,
+    employee_id: int,
+    pin: str,
+    operator: str = "DC/In-Charge",
+) -> Employee:
+    emp = session.get(Employee, employee_id)
+    if not emp:
+        raise ValueError(f"Employee {employee_id} not found")
+    pin = pin.strip()
+    if not pin:
+        raise ValueError("Availability PIN cannot be empty")
+    emp.availability_pin_hash = hash_password(pin)
+    emp.updated_at = datetime.utcnow()
+    session.add(
+        AuditLog(
+            action="employee_avail_pin_reset",
+            entity_type="employee",
+            entity_id=emp.id,
+            new_value=emp.staff_no or emp.name,
             created_by=operator,
         )
     )

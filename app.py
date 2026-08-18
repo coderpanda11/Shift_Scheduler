@@ -17,6 +17,7 @@ from views import (
     settings,
     staff_availability,
     staff_schedule,
+    vps_team,
     working_calendar,
 )
 from views.layout import inject_global_css, render_app_header
@@ -52,7 +53,8 @@ ALL_RENDERERS = {
     "Duty Statistics": duty_statistics.render,
     "Schedule History": schedule_history.render,
     "Settings": settings.render,
-    "My Schedule": staff_schedule.render,
+    "VPS Team": vps_team.render,
+    "Team Schedule": staff_schedule.render,
     "My Availability": staff_availability.render,
 }
 

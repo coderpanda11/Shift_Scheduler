@@ -43,6 +43,10 @@ def render() -> None:
                 "**Working calendar:** Sunday off · **1st & 3rd Saturday** holiday · "
                 "2nd / 4th / 5th Saturday working. Manual holidays & overrides still apply."
             )
+            st.caption(
+                "Staff availability PINs are **per employee** — reset under "
+                "**Employees → Edit → Reset availability PIN**."
+            )
             st.caption(f"Saturday rule setting: `{get_saturday_rule(session)}`")
             weekends = get_weekend_days(session)
             selected_days = st.multiselect(

@@ -12,8 +12,8 @@ def test_init_db_seeds_data():
     init_db("sqlite:///:memory:", engine=engine)
     with Session(engine) as session:
         roles = list(session.scalars(select(Role)).all())
-        assert len(roles) == 3
+        assert len(roles) == 4
         employees = list(session.scalars(select(Employee)).all())
-        assert len(employees) == 8
+        assert len(employees) == 9
         shifts = list(session.scalars(select(ShiftType)).all())
         assert len(shifts) == 3

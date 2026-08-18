@@ -1,4 +1,4 @@
-"""Staff view: own availability only."""
+"""Staff view: own availability with personal PIN."""
 
 from __future__ import annotations
 
@@ -8,8 +8,12 @@ import calendar
 import pandas as pd
 import streamlit as st
 
+from services.availability_auth_service import (
+    employee_requires_avail_pin,
+    verify_employee_availability_pin,
+)
 from services.availability_service import add_availability, delete_availability, list_availability
-from services.employee_service import list_employees
+from services.employee_service import get_employee, list_employees
 from utils.auth_context import current_operator, is_staff, linked_employee_id
 from utils.session import db_session
 
@@ -18,6 +22,46 @@ STATUSES = ["unavailable", "leave", "training", "official_duty", "other", "avail
 
 def _employee_labels(employees) -> dict[str, int]:
     return {f"{e.name} ({e.staff_no})": e.id for e in employees}
+
+
+def _pin_session_key(employee_id: int) -> str:
+    return f"avail_pin_unlocked_{employee_id}"
+
+
+def _render_pin_gate(session, emp_id: int) -> bool:
+    """Staff must enter their personal PIN once per session."""
+    emp = get_employee(session, emp_id)
+    if not emp:
+        st.error("Employee not found.")
+        return False
+
+    if not employee_requires_avail_pin(emp.role.code):
+        return True
+
+    if not emp.availability_pin_hash:
+        st.error(
+            "No availability PIN set for your account. "
+            "Ask DC/In-Charge to set one under Employees."
+        )
+        return False
+
+    key = _pin_session_key(emp_id)
+    if st.session_state.get(key):
+        return True
+
+    st.info(
+        f"Enter **your personal** availability code for **{emp.name}** "
+        f"({emp.staff_no}). This code is unique to you — not shared with other staff."
+    )
+    with st.form("avail_pin_form"):
+        code = st.text_input("Your availability code", type="password")
+        if st.form_submit_button("Unlock"):
+            if verify_employee_availability_pin(session, emp_id, code):
+                st.session_state[key] = True
+                st.rerun()
+            else:
+                st.error("Incorrect availability code.")
+    return False
 
 
 def render() -> None:
@@ -30,18 +74,6 @@ def render() -> None:
             st.info("No employees found.")
             return
 
-        emp_map = _employee_labels(employees)
-        labels = list(emp_map.keys())
-        default_idx = 0
-        if linked_id:
-            for i, label in enumerate(labels):
-                if emp_map[label] == linked_id:
-                    default_idx = i
-                    break
-
-        selected_label = st.selectbox("Employee", labels, index=default_idx)
-        emp_id = emp_map[selected_label]
-
         if is_staff():
             if not linked_id:
                 st.warning(
@@ -49,9 +81,19 @@ def render() -> None:
                     "Ask DC/In-Charge to link your account in Settings → Login Users."
                 )
                 return
-            if emp_id != linked_id:
-                st.error("You can only add or view availability for your own employee record.")
+            emp = get_employee(session, linked_id)
+            if not emp:
+                st.error("Linked employee not found.")
                 return
+            emp_id = linked_id
+            st.caption(f"Updating availability for **{emp.name}** ({emp.role.name})")
+        else:
+            emp_map = _employee_labels(employees)
+            selected_label = st.selectbox("Employee", list(emp_map.keys()))
+            emp_id = emp_map[selected_label]
+
+        if is_staff() and not _render_pin_gate(session, emp_id):
+            return
 
         tab_add, tab_list = st.tabs(["Add Availability", "My Records"])
 

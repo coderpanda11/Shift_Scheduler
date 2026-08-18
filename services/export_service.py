@@ -58,11 +58,11 @@ def export_print_html(session: "Session", sched: "Schedule") -> str:
         "body{font-family:Arial,sans-serif;margin:24px;}",
         "h1,h2{font-size:16px;} table{border-collapse:collapse;width:100%;margin-top:12px;}",
         "th,td{border:1px solid #ccc;padding:4px 6px;font-size:11px;text-align:center;}",
-        "th{background:#f1f5f9;}.name{text-align:left;font-weight:600;}.nw{background:#fef3c7;}.hdr{background:#e2e8f0;font-weight:600;}",
+        "th{background:#f1f5f9;}.name{text-align:left;font-weight:600;}.nw{background:#fef3c7;}.hdr{background:#e2e8f0;font-weight:600;}.na{background:#fee2e2;color:#991b1b;font-weight:600;}.off{background:#e5e7eb;color:#6b7280;font-weight:600;}",
         "@media print{body{margin:12px;}}",
         "</style></head><body>",
         f"<h1>{title}</h1>",
-        "<p>G = General · 1/2/3 = primary shifts · 1t/2t = trainee companion slots</p>",
+        "<p>G = General (Trainee/NE Backup) · X = off (primary NE) · 1/2/3 = primary shifts · 1A/2A = available for 1st/2nd · NA = non-exec unavailable</p>",
         "<h2>Duty Roster</h2><table><tr>",
     ]
     for col in cols:
@@ -77,8 +77,16 @@ def export_print_html(session: "Session", sched: "Schedule") -> str:
         html.append("<tr>")
         html.append(f'<td class="name">{row["Name"]}</td>')
         for d in day_nums:
-            cls = ' class="nw"' if d in nw_days else ""
-            html.append(f"<td{cls}>{row.get(str(d), '')}</td>")
+            val = row.get(str(d), "")
+            if val == "NA":
+                cls = ' class="na"'
+            elif val == "X":
+                cls = ' class="off"'
+            elif d in nw_days:
+                cls = ' class="nw"'
+            else:
+                cls = ""
+            html.append(f"<td{cls}>{val}</td>")
         html.append("</tr>")
     html.append("</table><h2>Duty Summary</h2><table><tr>")
     if summary:

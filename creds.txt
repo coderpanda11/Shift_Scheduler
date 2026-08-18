@@ -1,4 +1,20 @@
 Login ID	Password	Role
 dc_incharge DcIncharge@123  Admin (full access + user management)
 scheduler1 Scheduler@123    DC In-Charge
-staff_view Staff@123  Staff (view/use app)
+staff_view Staff@123  Staff (Team Schedule + My Availability; linked to TE001)
+
+Per-employee availability PINs (after staff login, on My Availability):
+Each person has a UNIQUE code — not shared by role group.
+Default pattern: Avail@<staff_no>
+
+NE001 (Non-Executive 1)       Avail@NE001
+NE002 (Non-Executive 2)       Avail@NE002
+NE003 (Non-Executive 3)       Avail@NE003
+NE004 (Non-Executive Backup)  Avail@NE004
+TE001 (Trainee Engineer 1)    Avail@TE001
+TE002 (Trainee Engineer 2)    Avail@TE002
+TE003 (Trainee Engineer 3)    Avail@TE003
+TE004 (Trainee Engineer 4)    Avail@TE004
+PE001 (Project Engineer)      Avail@PE001
+
+Reset a PIN: Employees → select employee → Reset availability PIN (admin/DC only).

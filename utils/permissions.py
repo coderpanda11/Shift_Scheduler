@@ -5,6 +5,7 @@ from __future__ import annotations
 MANAGER_PAGES = [
     "Dashboard",
     "Generate Schedule",
+    "VPS Team",
     "Employees",
     "Availability",
     "Working Calendar",
@@ -12,10 +13,11 @@ MANAGER_PAGES = [
     "Duty Statistics",
     "Schedule History",
     "Settings",
+    
 ]
 
 STAFF_PAGES = [
-    "My Schedule",
+    "Team Schedule",
     "My Availability",
 ]
 
@@ -29,7 +31,8 @@ NAV_ICONS = {
     "Duty Statistics": "📊",
     "Schedule History": "🕘",
     "Settings": "⚙️",
-    "My Schedule": "📋",
+    "VPS Team": "🖥",
+    "Team Schedule": "📋",
     "My Availability": "🚫",
 }
 

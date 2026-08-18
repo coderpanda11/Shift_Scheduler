@@ -463,21 +463,23 @@ def roster_grid_trainee(session: Session, sched: Schedule) -> tuple[list[dict], 
 
 
 def _assignment_cell_label(shift_number: int, slot_kind: str) -> str:
-    """Format cell: primary 1/2/3; trainee companion slot 1t/2t."""
+    """Format cell: primary 1/2/3; shift availability slot 1A/2A."""
     if slot_kind == "trainee":
-        return f"{shift_number}t"
+        return f"{shift_number}A"
     return str(shift_number)
 
 
 def roster_grid_combined(session: Session, sched: Schedule) -> tuple[list[dict], list[int], set[int], dict[str, str]]:
     """
     Combined grid for all active staff.
-    Working days with no shift duty -> G (General).
-    NW days: primary shifts 1/2/3, trainee companion slots 1t/2t.
+    Working days with no shift duty -> G for Trainee / NE Backup, X for primary NE.
+    NW days: primary shifts 1/2/3, availability slots 1A/2A.
+    Unavailable non-execs -> NA on blocked dates.
     """
     import calendar
 
     from config import ROLE_NON_EXECUTIVE, ROLE_NON_EXECUTIVE_BACKUP, ROLE_TRAINEE_ENGINEER
+    from services.availability_service import build_availability_map
     from services.calendar_service import get_calendar_for_month
     from services.employee_service import list_employees
 
@@ -503,16 +505,32 @@ def roster_grid_combined(session: Session, sched: Schedule) -> tuple[list[dict],
         key = (a.employee_name_snapshot, a.date.day)
         lookup[key] = label
 
+    avail_map = build_availability_map(session, sched.year, sched.month)
+    emp_by_name = {e.name: e for e in active}
+
     rows: list[dict] = []
     for name in names:
+        emp = emp_by_name.get(name)
         row: dict = {"Name": name}
         for d in day_nums:
             if (name, d) in lookup:
                 row[str(d)] = lookup[(name, d)]
             elif d in working_days:
-                row[str(d)] = "G"
+                if emp and emp.role.code in (ROLE_NON_EXECUTIVE_BACKUP, ROLE_TRAINEE_ENGINEER):
+                    row[str(d)] = "G"
+
+                elif emp and emp.role.code == ROLE_NON_EXECUTIVE:
+                    row[str(d)] = "X"
+                else:
+                    row[str(d)] = ""
             else:
-                row[str(d)] = ""
+                if emp and emp.role.code in (ROLE_NON_EXECUTIVE_BACKUP, ROLE_TRAINEE_ENGINEER):
+                    row[str(d)] = "X"
+                else:
+                    row[str(d)] = ""
+        if emp and emp.role.code in (ROLE_NON_EXECUTIVE, ROLE_NON_EXECUTIVE_BACKUP):
+            for blocked in avail_map.get(emp.id, set()):
+                row[str(blocked.day)] = "NA"
         rows.append(row)
 
     return rows, day_nums, nw_days, day_types

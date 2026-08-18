@@ -6,6 +6,7 @@ from __future__ import annotations
 ROLE_NON_EXECUTIVE = "NON_EXECUTIVE"
 ROLE_NON_EXECUTIVE_BACKUP = "NON_EXECUTIVE_BACKUP"
 ROLE_TRAINEE_ENGINEER = "TRAINEE_ENGINEER"
+ROLE_PROJECT_ENGINEER = "PROJECT_ENGINEER"
 
 # Availability statuses that block assignment
 BLOCKING_STATUSES = frozenset(
@@ -57,3 +58,12 @@ DEFAULT_SHIFT_TYPES: list[dict] = [
 ]
 
 DEFAULT_OPERATOR_NAME = "DC/In-Charge"
+
+# Default per-employee availability PIN pattern (each staff member gets Avail@<staff_no>)
+def default_availability_pin(staff_no: str) -> str:
+    return f"Avail@{staff_no.strip()}"
+
+# VPS Team sites
+VPS_SITE_DC = "dc"
+VPS_SITE_DR = "dr"
+VPS_SITES = (VPS_SITE_DC, VPS_SITE_DR)

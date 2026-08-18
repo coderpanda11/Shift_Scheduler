@@ -30,9 +30,14 @@ def _style_combined_grid(df: pd.DataFrame, nw_days: set[int]):
                     continue
                 val = str(row.get(col, ""))
                 if col in {str(d) for d in nw_days}:
-                    styles.loc[idx, col] = "background-color: #fef3c7"
+                    if val == "X":
+                        styles.loc[idx, col] = "background-color: #e5e7eb; color: #6b7280; font-weight: 600"
                 elif val == "G":
                     styles.loc[idx, col] = "background-color: #dcfce7; color: #166534"
+                elif val == "X":
+                    styles.loc[idx, col] = "background-color: #e5e7eb; color: #6b7280; font-weight: 600"
+                elif val == "NA":
+                    styles.loc[idx, col] = "background-color: #fee2e2; color: #991b1b; font-weight: 600"
 
     return df.style.apply(lambda _: styles, axis=None)
 
@@ -47,9 +52,11 @@ def render_combined_roster(
     """Render one combined table: day-type row + all employees."""
     st.subheader(title)
     st.caption(
-        "**G** = General (working day, no shift duty) · "
+        "**G** = General (Trainee / NE Backup, working day) · "
+        "**X** = off (primary Non-Exec, working day) · "
         "**1 / 2 / 3** = 1st / 2nd / 3rd shift (primary) · "
-        "**1t / 2t** = trainee companion on 1st / 2nd · blank = off (NW day)"
+        "**1A / 2A** = available for 1st / 2nd shift · "
+        "**NA** = non-exec unavailable · blank = off (NW day)"
     )
 
     type_row = {"Name": "Day Type", **{str(d): day_types.get(str(d), "") for d in day_nums}}
